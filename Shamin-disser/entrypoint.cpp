@@ -16,19 +16,22 @@ struct matrix
 };
 				
 const double PI = 3.14159265358979323846264338327950288;
-const double angles[] = {PI / 4, PI / 8, PI / 16, PI / 32, PI / 64, PI / 128, 
-						PI / 256, PI / 512, PI / 1024, PI / 2048,
-						PI / 4096, PI / 8192, PI / 16384, PI / 32768, PI / 65536 /*...*/};
-const double cos_v[] =  {cos(PI/4), cos(PI / 8), cos(PI / 16), cos(PI / 32), cos(PI / 64), cos(PI /128), 
-						cos(PI / 256), cos(PI / 512), cos(PI / 1024), cos(PI / 2048),
-						cos(PI / 4096), cos(PI / 8192), cos(PI / 16384), cos(PI / 32768), cos(PI / 65536)  /*...*/ };
-const double sin_v[] =  {sin(PI/4), sin(PI / 8), sin(PI / 16), sin(PI / 32), sin(PI / 64), sin(PI / 128), 
-						sin(PI / 256), sin(PI / 512), sin(PI / 1024), sin(PI / 2048),
-						sin(PI / 4096), sin(PI / 8192), sin(PI / 16384), sin(PI / 32768), sin(PI / 65536) /* ...*/};
-const double tan_v[] =  {tan(PI/4), tan(PI / 8), tan(PI / 16), tan(PI / 32), tan(PI / 64), tan(PI / 128), 
-						tan(PI / 256), tan(PI / 512), tan(PI / 1024), tan(PI / 2048),
-						tan(PI / 4096), tan(PI / 8192), tan(PI / 16384), tan(PI / 32768),  tan(PI / 65536) /* ...*/};
-const unsigned iterations = sizeof(cos_v) / sizeof(double);
+unsigned iterations = 0;
+const unsigned capacity = 128;
+double angles[capacity];
+double cos_v[capacity];
+double sin_v[capacity];
+void init_arrays()
+{
+	double ang = PI / 4;
+	for (unsigned i = 0; i < capacity; i = i + 1)
+	{
+		angles[i] = ang;
+		cos_v[i] = cos(ang);
+		sin_v[i] = sin(ang);
+		ang = ang / 2;
+	}
+}
 
 //0.5 ulp, Relative error 2^(-p+1) = 2^-52
 double my_tan(double x) /*0 <= x <= PI / 2*/
@@ -43,10 +46,6 @@ double my_tan(double x) /*0 <= x <= PI / 2*/
 			cos_v[i], -sin_v[i],
 			sin_v[i], cos_v[i]
 		};
-		/*T.a00 = cos_v[i];
-		T.a01 = -sin_v[i];
-		T.a10 = sin_v[i];
-		T.a11 = cos_v[i];*/
 		if (x >= angle)
 		{
 			T.a01 = sin_v[i];
@@ -63,15 +62,30 @@ double my_tan(double x) /*0 <= x <= PI / 2*/
 		};
 		R = r;
 	}
-	cout << "my_cos() = " << R.x << endl;
-	cout << "my_sin() = " << R.y << endl;
 	return R.y/R.x;
 }
 
 
 int main(int argc, char** argv)
 {
-	cout << "my_tan(31PI/180) = " << my_tan(31*PI/180) << endl;
-	cout << "my_tan(61PI/180) = " << my_tan(61 * PI / 180);
+	init_arrays();
+	std::cout << "==tan(31)==\n";
+	const double tan_31 = 0.60086061902756041487866442635466;
+	for (iterations = 1; iterations < capacity; ++iterations)
+	{
+		double result = my_tan(31*PI/180);
+		double absolute_error = abs(tan_31 - result);
+		double relative_error = absolute_error / tan_31;
+		std::cout << iterations << '\t' << relative_error << '\n';
+	}
+	std::cout << "==tan(61)==\n";
+	const double tan_61 = 1.804047755271423937381784748237;
+	for (iterations = 1; iterations < capacity; ++iterations)
+	{
+		double result = my_tan(61*PI/180);
+		double absolute_error = abs(tan_61 - result);
+		double relative_error = absolute_error / tan_61;
+		std::cout << iterations << '\t' << relative_error << '\n';
+	}
 	return 0;
 }
